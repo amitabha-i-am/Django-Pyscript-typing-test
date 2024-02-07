@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+
+    <link rel="stylesheet" href="https://pyscript.net/latest/pyscript.css" />
+    <script defer src="https://pyscript.net/latest/pyscript.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <title>Тест скорости печати</title>
+
+</head>
+{% block content %}
+<body>
+  <div class="container">
+    <h1>Тренажер печати</h1>
+    <div class="card text-center">
+      <div class="card-body">
+          <h2>Задание, осталось времени: 00:<a id="t"></a>
+        </h2>
+        <div class="text-center">
+          <p>Наберите следующий текст:</p>
+            <py-script>
+              from pyodide.ffi.wrappers import add_event_listener
+              from js import document
+              import asyncio
+
+              offset = 0
+              output_offset = 0
+              correct_words = 0
+              incorrect_words = 0
+              keystrokes = [0,0]
+
+              text = {{ text_words }}
+
+              input_box = Element("inputText")
+
+              async def main():
+                timer = 60
+                while timer >= 0:
+                    Element("t").write(timer)
+                    timer -=1
+                    await asyncio.sleep(1)
+                words_clear()
+                get_result()
+
+              def words_clear():
+                global text
+                for i in range(20):
+                    Element("w" + str(i)).clear()
+                text = []
+
+
+              def get_result():
+                table = document.getElementById("result-table")
+                table.setAttribute("style", "")
+                Element("wpm").write(str(keystrokes[0]/5) + " WPM")
+                Element("key_c").write(keystrokes[0])
+                Element("key_i").write(keystrokes[1])
+                Element("keystrokes").write(keystrokes[1] + keystrokes[0])
+                accuracy = 100 - (keystrokes[1] / ((keystrokes[1] + keystrokes[0]) / 100))
+                Element("accuracy").write(accuracy)
+                Element("correct_words").write(correct_words)
+                Element("wrong_words").write(incorrect_words)
+
+              def text_output():
+                current_word = document.getElementById("w" + str(offset-output_offset))
+                current_word.setAttribute("style", "background-color:LightGrey")
+                for i in range(20):
+                    Element("w" + str(i)).write(text[i+output_offset])
+
+              def offset_changer():
+                global correct_words
+                global incorrect_words
+                global offset
+                global output_offset
+                global keystrokes
+
+                current_word = document.getElementById("w" + str(offset-output_offset))
+
+                if input_box.value.strip() == text[offset]:
+                    current_word.setAttribute("style", "background-color:LightGreen")
+                    correct_words+=1
+                    keystrokes[0] += len(input_box.value)
+                else:
+                    current_word.setAttribute("style", "background-color:LightCoral")
+                    incorrect_words+=1
+                    keystrokes[1] += len(input_box.value)
+                offset +=1
+                if offset % 10 == 0:
+                    output_offset = offset
+                    for i in range(10):
+                        current_word = document.getElementById("w" + str(i))
+                        current_word.setAttribute("style", "")
+
+                text_output()
+
+              def handle_keypress(evt):
+
+                  if evt.key == " ":
+                    offset_changer()
+                    input_box.clear()
+
+              text_output()
+              asyncio.ensure_future(main())
+
+              add_event_listener(
+                  document.getElementById("inputText"),
+                  "keypress",
+                  handle_keypress
+                )
+                </py-script>
+            <p id="sentence">
+                <a id="w0"></a>
+                <a id="w1"></a>
+                <a id="w2"></a>
+                <a id="w3"></a>
+                <a id="w4"></a>
+                <a id="w5"></a>
+                <a id="w6"></a>
+                <a id="w7"></a>
+                <a id="w8"></a>
+                <a id="w9"></a>
+                <br>
+                <a id="w10"></a>
+                <a id="w11"></a>
+                <a id="w12"></a>
+                <a id="w13"></a>
+                <a id="w14"></a>
+                <a id="w15"></a>
+                <a id="w16"></a>
+                <a id="w17"></a>
+                <a id="w18"></a>
+                <a id="w19"></a>
+          </p>
+        </div>
+          <input id="inputText" class="form-control">
+          <br>
+
+
+        <button onclick="window.location.reload()" class="btn btn-primary">Рестарт</button>
+              <table class="table table-striped" id="result-table" style="visibility: collapse">
+            <tbody>
+                <tr><td class="name" colspan="2" title="Words per Minute: 1 word equals 5 keystrokes"><strong id="wpm">0 WPM</strong><small>(words per minute)</small></td></tr>
+                <tr><td class="name">Keystrokes</td><td class="value"><small>(<span id="key_c" style="color: green">0</span> | <span id="key_i" style="color: lightcoral">0</span>)</small>&nbsp;<a id="keystrokes" >0</a></td></tr>
+                <tr><td class="name">Accuracy</td><td class="value"> <strong id="accuracy">0%</strong></td></tr>
+                <tr><td class="name">Correct words</td><td class="value"> <strong id="correct_words">0</strong></td></tr>
+                <tr><td class="name">Wrong words</td><td class="value"> <strong id="wrong_words">0</strong></td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</body>
+{% endblock %}
+</html>
