@@ -82,11 +82,14 @@
                     current_word.setAttribute("style", "background-color:LightGreen")
                     correct_words+=1
                     keystrokes[0] += len(input_box.value)
+                    offset +=1
+                elif input_box.value.strip() == "":
+                    pass
                 else:
                     current_word.setAttribute("style", "background-color:LightCoral")
                     incorrect_words+=1
                     keystrokes[1] += len(input_box.value)
-                offset +=1
+                    offset +=1
                 if offset % 10 == 0:
                     output_offset = offset
                     for i in range(10):
@@ -134,7 +137,7 @@
                 <a id="w19"></a>
           </p>
         </div>
-          <input id="inputText" class="form-control">
+          <input id="inputText" class="form-control" autofocus>
           <br>
 
 
